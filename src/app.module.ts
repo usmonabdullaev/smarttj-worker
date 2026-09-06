@@ -2,7 +2,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
-import { NotificationQueueModule } from './queues/notification/notification.module';
+import { NotificationModule } from './queues/notification/notification.module';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { LoggerModule } from './logger/logger.module';
 
@@ -13,7 +13,6 @@ import { LoggerModule } from './logger/logger.module';
       envFilePath: '.env',
     }),
 
-    // Глобальное подключение к Redis для всех будущих очередей
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -28,7 +27,7 @@ import { LoggerModule } from './logger/logger.module';
     LoggerModule,
 
     PrismaModule,
-    NotificationQueueModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}
