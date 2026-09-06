@@ -1,0 +1,24 @@
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: smarttj-worker
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - smarttj-network
+
+networks:
+  smarttj-network:
+    external: true
