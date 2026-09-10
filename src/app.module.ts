@@ -2,6 +2,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
+import { NotificationTelegramModule } from './queues/notification-telegram/notification-telegram.module';
 import { NotificationModule } from './queues/notification/notification.module';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { LoggerModule } from './logger/logger.module';
@@ -25,9 +26,10 @@ import { LoggerModule } from './logger/logger.module';
     }),
 
     LoggerModule,
-
     PrismaModule,
+
     NotificationModule,
+    NotificationTelegramModule,
   ],
 })
 export class AppModule {}

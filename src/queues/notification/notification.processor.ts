@@ -1,15 +1,15 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 
 import { PrismaService } from '../../database/prisma/prisma.service';
+import { LoggerService } from '../../logger/logger.service';
 import { SendRequest } from './dto/send-request.dto';
 
 @Processor('notification', {
   concurrency: 5, // Обрабатывать до 5 задач параллельно
 })
 export class NotificationProcessor extends WorkerHost {
-  private readonly logger = new Logger(NotificationProcessor.name);
+  private readonly logger = new LoggerService(NotificationProcessor.name);
 
   constructor(private readonly prisma: PrismaService) {
     super();
@@ -19,7 +19,6 @@ export class NotificationProcessor extends WorkerHost {
     switch (job.name) {
       case 'notification': {
         const dto = job.data;
-        this.logger.log(`Processing job ${job.id} for user ${dto.userId}`);
 
         const user = await this.prisma.user.findUnique({
           where: { id: dto.userId },
@@ -29,7 +28,7 @@ export class NotificationProcessor extends WorkerHost {
           this.logger.warn(
             `User ${dto.userId} not found. Attempt ${job.attemptsMade + 1}/${job.opts.attempts}`,
           );
-          // Бросаем ошибку, чтобы сработал backoff retry из Producer
+
           throw new Error(`User with ID ${dto.userId} not found`);
         }
 
@@ -43,7 +42,12 @@ export class NotificationProcessor extends WorkerHost {
           },
         });
 
-        this.logger.log(`Notification created for user ${dto.userId}`);
+        this.logger.log(
+          `Notification created for user ${dto.userId}`,
+          undefined,
+          { save: false },
+        );
+
         break;
       }
       default:
@@ -51,17 +55,11 @@ export class NotificationProcessor extends WorkerHost {
     }
   }
 
-  // BullMQ lifecycle events
   @OnWorkerEvent('failed')
   onFailed(job: Job, err: Error) {
     this.logger.error(
       `Job ${job.id} of queue [notification] failed. Reason: ${err.message}`,
-      err.stack,
+      err,
     );
-  }
-
-  @OnWorkerEvent('completed')
-  onCompleted(job: Job) {
-    this.logger.debug(`Job ${job.id} completed successfully.`);
   }
 }
