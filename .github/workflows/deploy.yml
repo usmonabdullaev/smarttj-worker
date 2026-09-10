@@ -52,6 +52,4 @@ jobs:
             docker compose build
             docker compose up -d
 
-            docker compose exec -T worker npm run prisma:deploy
-
             docker image prune -f
