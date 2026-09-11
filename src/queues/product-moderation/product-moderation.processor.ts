@@ -1,9 +1,12 @@
-import { AskRequestProvider, AskRequestPurpose } from '@smarttj/core/ai';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { NotificationType, ProductStatus } from '@prisma/client';
-import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
+import {
+  AskRequestProvider,
+  AskRequestPurpose,
+  QUEUE_KEYS,
+} from '@smarttj/core';
 
-import { HttpClientService } from '../../infra/http-client/http-client.service';
 import { NotificationService } from '../notification/notification.service';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { LoggerService } from '../../logger/logger.service';
@@ -11,27 +14,23 @@ import {
   PRODUCT_MODERATE_PROMPT,
   productModerateParser,
 } from '../../ai/prompts/product-moderate.prompt';
-import { ConfigService } from '@nestjs/config';
+import { AIService } from '../../ai/ai.service';
 
-@Processor('product-moderation')
+@Processor(QUEUE_KEYS.PRODUCT_MODERATION)
 export class ProductModerationProcessor extends WorkerHost {
   private readonly logger = new LoggerService(ProductModerationProcessor.name);
-  private readonly AIServiceUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly notification: NotificationService,
-    private readonly httpClient: HttpClientService,
-    private readonly config: ConfigService,
+    private readonly aiService: AIService,
   ) {
     super();
-
-    this.AIServiceUrl = this.config.getOrThrow('AI_SERVICE_URL');
   }
 
   async process(job: Job) {
     switch (job.name) {
-      case 'moderate-product': {
+      case QUEUE_KEYS.PRODUCT_MODERATION: {
         const id = job.data.productId;
         const state = await job.getState();
         const isLastAttempt = job.attemptsMade + 1 === job.opts.attempts;
@@ -60,7 +59,7 @@ export class ProductModerationProcessor extends WorkerHost {
         });
 
         if (!product) {
-          this.logger.warn(`[BullMQ] - Product ${id} not found`, {
+          this.logger.warn(`Product ${id} not found`, {
             productId: id,
             state,
             attempt: job.attemptsMade + 1,
@@ -165,9 +164,7 @@ export class ProductModerationProcessor extends WorkerHost {
           model: product.model?.name,
         });
 
-        const { data } = await this.httpClient.post<{ data: string }>(
-          'ai-service',
-          `${this.AIServiceUrl}/ask`,
+        const { data } = await this.aiService.ask(
           {
             context: PRODUCT_MODERATE_PROMPT,
             prompt,
@@ -175,15 +172,13 @@ export class ProductModerationProcessor extends WorkerHost {
             temperature: 0.2,
             provider: AskRequestProvider.GEMINI,
           },
-          {
-            timeout: 20000,
-          },
+          { timeout: 20000 },
         );
 
         const { text, ok } = productModerateParser(data);
 
         if (ok === undefined || !text) {
-          this.logger.warn(`[BullMQ] - AI response error`, {
+          this.logger.warn('AI response error', {
             text: text,
             state,
             attempt: job.attemptsMade + 1,
@@ -215,6 +210,11 @@ export class ProductModerationProcessor extends WorkerHost {
             },
           });
 
+          await this.prisma.product.update({
+            where: { id: product.id },
+            data: { status: ProductStatus.INACTIVE },
+          });
+
           return;
         }
 
@@ -227,5 +227,13 @@ export class ProductModerationProcessor extends WorkerHost {
         });
       }
     }
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job, err: Error) {
+    this.logger.error(
+      `Job ${job.id} of queue [${QUEUE_KEYS.PRODUCT_MODERATION}] failed. Reason: ${err.message}`,
+      err,
+    );
   }
 }

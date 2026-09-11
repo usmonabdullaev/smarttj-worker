@@ -1,11 +1,12 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
+import { QUEUE_KEYS } from '@smarttj/core';
 import { Job } from 'bullmq';
 
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { LoggerService } from '../../logger/logger.service';
 import { SendRequest } from './dto/send-request.dto';
 
-@Processor('notification', {
+@Processor(QUEUE_KEYS.NOTIFICATION, {
   concurrency: 5, // Обрабатывать до 5 задач параллельно
 })
 export class NotificationProcessor extends WorkerHost {
@@ -17,7 +18,7 @@ export class NotificationProcessor extends WorkerHost {
 
   async process(job: Job<SendRequest>): Promise<void> {
     switch (job.name) {
-      case 'notification': {
+      case QUEUE_KEYS.NOTIFICATION: {
         const dto = job.data;
 
         const user = await this.prisma.user.findUnique({
@@ -58,7 +59,7 @@ export class NotificationProcessor extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job, err: Error) {
     this.logger.error(
-      `Job ${job.id} of queue [notification] failed. Reason: ${err.message}`,
+      `Job ${job.id} of queue [${QUEUE_KEYS.NOTIFICATION}] failed. Reason: ${err.message}`,
       err,
     );
   }

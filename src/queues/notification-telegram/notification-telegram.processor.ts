@@ -1,4 +1,5 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
+import { QUEUE_KEYS } from '@smarttj/core';
 import { Job } from 'bullmq';
 
 import { TelegramBlockedException } from '../../infra/telegram/dto/send.dto';
@@ -6,7 +7,7 @@ import { TelegramService } from '../../infra/telegram/telegram.service';
 import { LoggerService } from '../../logger/logger.service';
 import { SendRequest } from './dto/send-request.dto';
 
-@Processor('notification-telegram', {
+@Processor(QUEUE_KEYS.NOTIFICATION_TELEGRAM, {
   concurrency: 5, // Обрабатывать до 5 задач параллельно
   limiter: {
     max: 25,
@@ -22,9 +23,9 @@ export class NotificationTelegramProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<SendRequest>): Promise<void> {
+  async process(job: Job<SendRequest>) {
     switch (job.name) {
-      case 'notification-telegram': {
+      case QUEUE_KEYS.NOTIFICATION_TELEGRAM: {
         const dto = job.data;
 
         try {
@@ -58,7 +59,7 @@ export class NotificationTelegramProcessor extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job, err: Error) {
     this.logger.error(
-      `Job ${job.id} of queue [notification-telegram] failed. Reason: ${err.message}`,
+      `Job ${job.id} of queue [${QUEUE_KEYS.NOTIFICATION_TELEGRAM}] failed. Reason: ${err.message}`,
       err,
     );
   }
