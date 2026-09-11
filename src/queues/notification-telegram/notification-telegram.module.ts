@@ -2,7 +2,6 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
 import { NotificationTelegramProcessor } from './notification-telegram.processor';
-import { NotificationTelegramService } from './notification-telegram.service';
 import { TelegramModule } from '../../infra/telegram/telegram.module';
 
 @Module({
@@ -12,7 +11,6 @@ import { TelegramModule } from '../../infra/telegram/telegram.module';
     }),
     TelegramModule,
   ],
-  providers: [NotificationTelegramProcessor, NotificationTelegramService],
-  exports: [NotificationTelegramService],
+  providers: [NotificationTelegramProcessor],
 })
 export class NotificationTelegramModule {}

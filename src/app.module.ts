@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 
 import { NotificationTelegramModule } from './queues/notification-telegram/notification-telegram.module';
 import { NotificationModule } from './queues/notification/notification.module';
+import { HttpClientModule } from './infra/http-client/http-client.module';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { LoggerModule } from './logger/logger.module';
 
@@ -27,6 +28,7 @@ import { LoggerModule } from './logger/logger.module';
 
     LoggerModule,
     PrismaModule,
+    HttpClientModule,
 
     NotificationModule,
     NotificationTelegramModule,

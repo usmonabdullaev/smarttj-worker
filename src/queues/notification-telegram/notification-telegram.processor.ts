@@ -1,10 +1,10 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 
+import { TelegramBlockedException } from '../../infra/telegram/dto/send.dto';
 import { TelegramService } from '../../infra/telegram/telegram.service';
 import { LoggerService } from '../../logger/logger.service';
 import { SendRequest } from './dto/send-request.dto';
-import { TelegramBlockedException } from '../../infra/telegram/dto/send.dto';
 
 @Processor('notification-telegram', {
   concurrency: 5, // Обрабатывать до 5 задач параллельно
