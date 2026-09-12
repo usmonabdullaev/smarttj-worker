@@ -1,4 +1,4 @@
 export interface HttpClientModuleOptions {
-  serviceName: string; // Имя текущего сервиса (iss), например 'smarttj-backend'
+  serviceName: string; // Имя текущего сервиса (iss)
   secret: string; // Общий JWT секрет
 }

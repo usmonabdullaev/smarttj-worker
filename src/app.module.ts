@@ -3,11 +3,11 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
 import { NotificationTelegramModule } from './queues/notification-telegram/notification-telegram.module';
+import { ProductModerationModule } from './queues/product-moderation/product-moderation.module';
 import { NotificationModule } from './queues/notification/notification.module';
 import { HttpClientModule } from './infra/http-client/http-client.module';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { LoggerModule } from './logger/logger.module';
-import { ProductModerationModule } from './queues/product-moderation/product-moderation.module';
 
 @Module({
   imports: [
@@ -30,8 +30,8 @@ import { ProductModerationModule } from './queues/product-moderation/product-mod
     LoggerModule,
     PrismaModule,
     HttpClientModule.forRoot({
-      serviceName: 'ai-service',
-      secret: process.env.HTTP_SERVICE_SECRET || '',
+      serviceName: 'smarttj-worker',
+      secret: process.env.INTERNAL_SERVICE_SECRET || '',
     }),
 
     NotificationModule,
