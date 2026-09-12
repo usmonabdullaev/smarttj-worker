@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 
 import { ProductModerationProcessor } from './product-moderation.processor';
 import { NotificationModule } from '../notification/notification.module';
+import { AIService } from '../../ai/ai.service';
 
 @Module({
   imports: [
@@ -12,6 +13,6 @@ import { NotificationModule } from '../notification/notification.module';
     }),
     NotificationModule,
   ],
-  providers: [ProductModerationProcessor],
+  providers: [ProductModerationProcessor, AIService],
 })
 export class ProductModerationModule {}

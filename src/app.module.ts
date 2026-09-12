@@ -7,6 +7,7 @@ import { NotificationModule } from './queues/notification/notification.module';
 import { HttpClientModule } from './infra/http-client/http-client.module';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { LoggerModule } from './logger/logger.module';
+import { ProductModerationModule } from './queues/product-moderation/product-moderation.module';
 
 @Module({
   imports: [
@@ -28,10 +29,14 @@ import { LoggerModule } from './logger/logger.module';
 
     LoggerModule,
     PrismaModule,
-    HttpClientModule,
+    HttpClientModule.forRoot({
+      serviceName: 'ai-service',
+      secret: process.env.HTTP_SERVICE_SECRET || '',
+    }),
 
     NotificationModule,
     NotificationTelegramModule,
+    ProductModerationModule,
   ],
 })
 export class AppModule {}
